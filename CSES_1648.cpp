@@ -55,15 +55,14 @@ vll tr;
 
 ll f(ll node, ll n_l, ll n_r, ll q_l, ll q_r){
 	if(q_l <= n_l && q_r >= n_r) return tr[node];
-	if(n_r < q_l || q_r < n_l) return 0;
+	if(n_r < q_l || q_r < n_l) return -1;
 	ll avg = (n_l + n_r) / 2;
-	return f(2*node,n_l,avg,q_l, q_r) + f(2*node+1,avg+1,n_r,q_l,q_r);
-}
-
-void update(ll n, ll i, ll val){
-	tr[n+i] = val;
-	for(int j = (n+i)/2; j >= 1; j/=2){
-		tr[j] = tr[j*2] + tr[j*2+1];
+	ll L = f(2*node,n_l,avg,q_l, q_r);
+	ll R = f(2*node+1,avg+1,n_r,q_l,q_r);
+	if(L!=-1 && R!=-1) return (L + R);
+	else{
+		if(L==-1) return R;
+		else return L;
 	}
 }
 
@@ -71,6 +70,25 @@ void build(ll n,vll& v){
 	tr.resize(2*n);
 	for(int i = 0; i < n; ++i) tr[n+i] = v[i];
 	for(int i = n-1; i >= 1; --i) tr[i] = tr[2*i] + tr[2*i+1];
+}
+
+void updateIter(ll n, ll i, ll val){
+	tr[n+i] = val;
+	for(int j = (n+i)/2; j >= 1; j/=2){
+		tr[j] = tr[2*j] + tr[2*j+1];
+	}
+}
+
+void updateRec(ll node, ll n_l, ll n_r, ll q_l, ll q_r, ll val){
+	if(n_l >= q_l && n_r <= q_r){
+		tr[node] = val;
+		return;
+	}
+	if(n_l > q_r || n_r < q_l) return;
+	ll avg = (n_l + n_r)/2;
+	updateRec(2*node,n_l,avg,q_l,q_r,val);
+	updateRec(2*node+1,avg+1,n_r,q_l,q_r,val);
+	tr[node] = tr[node*2] + tr[node*2+1];
 }
 
 void solve(){
@@ -83,22 +101,21 @@ void solve(){
 		n++;
 	}
 	build(n,v);
-	debug() << db(v);
-	debug() << db(tr);
 	while(q--){
-		ll type; cin >> type;
-		if(type==2){
+		ll t; cin >> t;
+		if(t==1){
+			ll k, u; cin >> k >> u;
+			k--;
+			updateRec(1,0,n-1,k,k,u);
+			// updateIter(n,k,u);
+		}
+		else{
 			ll l, r; cin >> l >> r;
 			l--; r--;
 			cout << f(1,0,n-1,l,r) << endl;
 		}
-		else{
-			ll k, u; cin >> k >> u;
-			k--;
-			update(n,k,u);
-			debug() << db(tr);
-		}
 	}
+	
 }
 
 int main(){
